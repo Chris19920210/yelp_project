@@ -4,6 +4,7 @@ import os
 import argparse
 from numpy import mean
 from numpy import max
+from numpy import median
 import re
 
 
@@ -15,7 +16,7 @@ parser.add_argument('--data-dir', type=str, default='npy_data',
 parser.add_argument('--dataset', type=str, required=True,
                     help='dataset name')
 parser.add_argument('--pooling-method', type=str, default='max',
-                    choices=['max', 'mean'],
+                    choices=['max', 'mean', 'median'],
                     help='pooling method for aggregate feature')
 args = parser.parse_args()
 
@@ -41,7 +42,7 @@ X = pd.concat([Id, X], axis=1)
 # set Id as index
 X.set_index('photo_id', inplace=True)
 # possible methods for pooling
-methods = {'max': max, 'mean': mean}
+methods = {'max': max, 'mean': mean, 'median': median}
 # pooling based on business id
 def main():
     tmp = []
