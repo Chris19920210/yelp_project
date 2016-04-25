@@ -16,3 +16,4 @@ Tree based: number of trees(rounds), depths, number of features for node splits,
 SGD: penalty multiplier 
 Boosting: learning rate
 
+Firstly, best model for each classifier is set up as the benchmark. In general, the models based on Inception-21k features and mean pooling give us the best performance among all. 
