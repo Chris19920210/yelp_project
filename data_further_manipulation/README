@@ -1,0 +1,1 @@
+As each business_id has many corresponding photo_id, we use pooling method to aggregate the data in order to get features for each business_id.
