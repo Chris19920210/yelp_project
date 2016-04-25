@@ -1,1 +1,3 @@
 This directory includes results based on various model, data set(V3, 21k, BN) and methods for data aggregation(mean and max).
+
+In conclusion, Inception-21k features is the best among the three, and mean pooling method beats max pooling.
