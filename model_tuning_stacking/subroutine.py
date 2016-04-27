@@ -63,17 +63,76 @@ def PartialStringColumns(columns):
         d[method + '_' + data] = (method, data)
     return d
 
-def RerivalDict(key, path, lists, threshold):
 
+def RetrivalDict(key, path, threshold, dicts):
+    d = defaultdict(dict)
     with open(path, 'r') as f:
         for k, line in enumerate(f):
             if k < threshold
             line = line.strip()
             model, d_individual, _ = parse(line)
+            classifier = dicts[model]
+            d[key][str(k)] = (d_individual, classifier)
+    return d
 
+pipeline = Pipeline([
+    # Extract the subject & body
+    ('subjectbody', SubjectBodyExtractor()),
 
+    # Use FeatureUnion to combine the features from subject and body
+    ('union', FeatureUnion(
+        transformer_list=[
 
+            # Pipeline for pulling features from the post's subject line
+            ('subject', Pipeline([
+                ('selector', ItemSelector(key='subject')),
+                ('tfidf', TfidfVectorizer(min_df=50)),
+            ])),
+
+            # Pipeline for standard bag-of-words model for body
+            ('body_bow', Pipeline([
+                ('selector', ItemSelector(key='body')),
+                ('tfidf', TfidfVectorizer()),
+                ('best', TruncatedSVD(n_components=50)),
+            ])),
+
+            # Pipeline for pulling ad hoc features from post's body
+            ('body_stats', Pipeline([
+                ('selector', ItemSelector(key='body')),
+                ('stats', TextStats()),  # returns a list of dicts
+                ('vect', DictVectorizer()),  # list of dicts -> feature matrix
+            ])),
+
+        ],
+
+        # weight components in FeatureUnion
+        transformer_weights={
+            'subject': 0.8,
+            'body_bow': 0.5,
+            'body_stats': 1.0,
+        },
+    )),
+
+    # Use a SVC classifier on the combined features
+    ('svc', SVC(kernel='linear')),
+])
+
+# generate a list for FeatureUnion
+# nested dictionary
+#
 def pipeline_generator(dicts):
+    result = []
+    for key, value in dicts.items():
+        for k, v in value.items():
+            d_individual, classifier = v
+            a = (str(key)+str(k), Pipeline([
+                    ('selector', DataFrameSelector(key=k)),
+                    ('reduce_dim', PCA().set)
+                ()]))
+
+
+
+
 
 
 

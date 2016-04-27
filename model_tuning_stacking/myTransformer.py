@@ -33,9 +33,9 @@ class MyTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, **transform_params):
         try:
-            prediciton = self.model.predict_proba(X)
+            prediciton = self.model.predict_proba(X)[:, 1]
         except:
-            prediction = self.model.predict(X)
+            prediction = self.model.predict(X)[:, 1]
         return pd.DataFrame(prediction)
 
 

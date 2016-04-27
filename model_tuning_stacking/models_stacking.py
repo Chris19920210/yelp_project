@@ -19,6 +19,9 @@ import argparse
 import re
 import collections
 from myTransformer import MyTransformer, DataFrameSeparator, DataFrameSelector
+from collections import defaultdict
+from subroutine import parse,  RetrivalDict
+from subroutine import PartialStringColumns
 
 # parser for model stacking
 parser = argparse.ArgumentParser(description='tuning various models')
@@ -60,6 +63,44 @@ methods = {'svm': SGDClassifier(loss='hinge'),
 'random_forest': RandomForestClassifier(),
 'lda': LinearDiscriminantAnalysis(),
 'qda': QuadraticDiscriminantAnalysis()}
+
+key, path, lists, threshold, dicts
+#  data preparation
+#  generate metadata dictionary
+dict_list = []
+# path to mean_pooling_result
+path1 = 'mean_pooling_result'
+# path to mean_pooling_result
+path2 = 'max_pooling_result'
+
+# files that with specific labels
+files = [f for f in os.listdir(path1) if re.match(r'Result_for_Class_' + re.escape(args.nclass) + r'.*', f)]
+
+# pattern in order to retrive file by args
+pattern = r"^(Result_for_Class_)\d+_(\w+.*)_\w+\d+\.txt$"
+
+
+for value in args.mean_pooling + args.max_pooling:
+    if re.match(r'mean.*', value):
+        # retrive wanted file
+        tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
+        # path to wanted file
+        path = os.path.join(path1, tmp_list[0])
+        d = RetrivalDict(value, path, args.top, methods)
+    else:
+        tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
+        path = os.path.join(path1, tmp_list[0])
+        d = RetrivalDict(value, path, args.top, methods)
+    dict_list.append(d)
+
+# transform to dictionary
+agg_dicts = defaultdict(d)
+for value in dict_list:
+    k, v = value.items()
+    agg_dicts[k] = v
+
+
+
 
 
 

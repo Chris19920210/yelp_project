@@ -16,7 +16,7 @@ parser.add_argument('--dataset', nargs='+', type=str, required=True,
 args = parser.parse_args()
 
 
-data = []
+meta_data = []
 for value in args.data_dir:
     path_tuple = list(itertools.product(value, args.dataset))
     paths = path_generator(path_tuple)
