@@ -20,7 +20,7 @@ import re
 import collections
 from myTransformer import MyTransformer, DataFrameSeparator, DataFrameSelector
 from collections import defaultdict
-from subroutine import parse,  RetrivalDict
+from subroutine import parse,  RetrievalDict, pipeline_generator
 from subroutine import PartialStringColumns
 
 # parser for model stacking
@@ -49,22 +49,30 @@ parser.add_argument('--lr', nargs='+', type=float, default=[1, 2, 1],
                     help='learning rate for gradient based model')
 parser.add_argument('--alpha', nargs='+', type=float, default=[1, 2, 1],
                     help='rate for penalty')
+parser.add_argument('--subsample', type=float, default=[1, 2, 1],
+                    help='rate for subsample')
+parser.add_argument('--colsample-bytree', type=float, default=[0.8, 1.2, 0.2], help='rate for feature bagging')
 args = parser.parse_args()
 
+# load data and labels
+data_path = os.path.join(args.data_dir, args.dataset)
+X = pd.read_csv(data_path)
+X.drop('business_id', axis=1, inplace=True)
+y = pd.read_csv(args.labels_file)[args.nclass]
 
 
+# potential methods
 methods = {'svm': SGDClassifier(loss='hinge'),
-'msvm': SGDClassifier(loss='squared_hinge'),
-'huber': SGDClassifier(loss='modified_huber'),
-'logistic': SGDClassifier(loss='log'),
-'xgboost': XGBClassifier(),
-'adaboost': AdaBoostClassifier(),
-'extra_tree': ExtraTreesClassifier(),
-'random_forest': RandomForestClassifier(),
-'lda': LinearDiscriminantAnalysis(),
-'qda': QuadraticDiscriminantAnalysis()}
+            'msvm': SGDClassifier(loss='squared_hinge'),
+            'huber': SGDClassifier(loss='modified_huber'),
+            'logistic': SGDClassifier(loss='log'),
+            'xgboost': XGBClassifier(),
+            'adaboost': AdaBoostClassifier(),
+            'extra_tree': ExtraTreesClassifier(),
+            'random_forest': RandomForestClassifier(),
+            'lda': LinearDiscriminantAnalysis(),
+            'qda': QuadraticDiscriminantAnalysis()}
 
-key, path, lists, threshold, dicts
 #  data preparation
 #  generate metadata dictionary
 dict_list = []
@@ -76,21 +84,21 @@ path2 = 'max_pooling_result'
 # files that with specific labels
 files = [f for f in os.listdir(path1) if re.match(r'Result_for_Class_' + re.escape(args.nclass) + r'.*', f)]
 
-# pattern in order to retrive file by args
+# pattern in order to retrieve file by args
 pattern = r"^(Result_for_Class_)\d+_(\w+.*)_\w+\d+\.txt$"
 
 
 for value in args.mean_pooling + args.max_pooling:
     if re.match(r'mean.*', value):
-        # retrive wanted file
+        # retrieve wanted file
         tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
         # path to wanted file
         path = os.path.join(path1, tmp_list[0])
-        d = RetrivalDict(value, path, args.top, methods)
+        d = RetrievalDict(value, path, args.top, methods)
     else:
         tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
-        path = os.path.join(path1, tmp_list[0])
-        d = RetrivalDict(value, path, args.top, methods)
+        path = os.path.join(path2, tmp_list[0])
+        d = RetrievalDict(value, path, args.top, methods)
     dict_list.append(d)
 
 # transform to dictionary
@@ -100,59 +108,30 @@ for value in dict_list:
     agg_dicts[k] = v
 
 
-
-
-
-
-
-pipeline = Pipeline([
-    # Extract the subject & body
-    ('subjectbody', SubjectBodyExtractor()),
-
-    # Use FeatureUnion to combine the features from subject and body
-    ('union', FeatureUnion(
-        transformer_list=[
-
-            # Pipeline for pulling features from the post's subject line
-            ('subject', Pipeline([
-                ('selector', ItemSelector(key='subject')),
-                ('tfidf', TfidfVectorizer(min_df=50)),
-            ])),
-
-            # Pipeline for standard bag-of-words model for body
-            ('body_bow', Pipeline([
-                ('selector', ItemSelector(key='body')),
-                ('tfidf', TfidfVectorizer()),
-                ('best', TruncatedSVD(n_components=50)),
-            ])),
-
-            # Pipeline for pulling ad hoc features from post's body
-            ('body_stats', Pipeline([
-                ('selector', ItemSelector(key='body')),
-                ('stats', TextStats()),  # returns a list of dicts
-                ('vect', DictVectorizer()),  # list of dicts -> feature matrix
-            ])),
-
-        ],
-
-        # weight components in FeatureUnion
-        transformer_weights={
-            'subject': 0.8,
-            'body_bow': 0.5,
-            'body_stats': 1.0,
-        },
-    )),
-
-    # Use a SVC classifier on the combined features
-    ('svc', SVC(kernel='linear')),
-])
-
 # general pipeline
-pipeline = Pipeline([
-        ('separator', DataFrameSeparator()),
-        ('union', FeatureUnion(
-         transformer_list=[
+def main():
+    clf = Pipeline([
+            ('separator', DataFrameSeparator()),
+            ('union', FeatureUnion(
+                transformer_list=pipeline_generator(agg_dicts)
+            )),
+            ('xgboost', XGBClassifier())])
+    params['xgboost__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
+    params['xgboost__max_depth'] = list(np.arange(args.depths[0], args.depths[1], args.depths[2]))
+    params['xgboost__learning_rate'] = list(np.arange(args.lr[0], args.lr[1], args.lr[2]))
+    params['xgboost__subsample'] = np.arange(args.subsample[0], args.subsample[1], args.subsample[2])
+    params['xgboost__colsample_bytree'] = np.arange(args.colsample_bytree[0], args.colsample_bytree[1], args.colsample_bytree[2])
+    try:
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1, scoring='f1')
+        grid_search.fit(X, y)
+    except:
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
+        grid_search.fit(X, y)
+    best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
 
-         ]
-         )),
-        ('xgboost', XGBClassifier())]
+if __name__ == '__main__':
+    main()
+
+
+
+

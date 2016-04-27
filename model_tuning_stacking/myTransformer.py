@@ -18,7 +18,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 import argparse
 import re
 import collections
-from sklearn.base import BaseEstimator, TransformerMixi
+from sklearn.base import BaseEstimator, TransformerMixin
 from subroutine import PartialStringColumns
 
 
@@ -45,11 +45,13 @@ class DataFrameSeparator(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, **transform_params):
-        columns = X.columns
-        d = PartialStringColumns(columns)
+        pooling = ['max', 'mean']
+        feature = ['Inception', 'Inception-7', 'Inception_BN']
+        d = PartialStringColumns(pooling, feature)
         feature = {}
-        for k in d.keys:
-            feature[k] = X.filter(regex=(k.*))
+        for k in d.keys():
+            part = re.escape(k) + r'_\d+.*'
+            feature[k] = X.filter(regex=part)
         return feature
 
 
