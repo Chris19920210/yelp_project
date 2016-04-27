@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+find . -type f -name 'Result_for_Class_*_Inception_train224.txt' -print | while read filename; do
+    echo "$filename"
+    cat "$filename"
+done > output-21k.txt
