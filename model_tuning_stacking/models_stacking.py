@@ -74,7 +74,7 @@ methods = {'svm': SGDClassifier(loss='hinge'),
             'qda': QuadraticDiscriminantAnalysis()}
 
 #  data preparation
-#  generate metadata dictionary
+#  generate metadata list
 dict_list = []
 # path to mean_pooling_result
 path1 = 'mean_pooling_result'
@@ -128,9 +128,11 @@ def main():
         grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
+    return (best_parameters, score)
 
 if __name__ == '__main__':
-    main()
+    result = main()
+    print result
 
 
 
