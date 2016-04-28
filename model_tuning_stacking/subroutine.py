@@ -83,10 +83,38 @@ def pipeline_generator(dicts):
             chunk = (str(key)+str(k), Pipeline([
                     ('selector', DataFrameSelector(key=key)),
                     ('reduce_dim', PCA(**d_individual['reduce'])),
-                    ('classifier', MyTransformer(classifier(**d_individual['classifier'])))
+                    ('classifier', MyTransformer(classifier.set_params(**d_individual['classifier'])))
                 ]))
             result.append(chunk)
     return result
+
+
+# best model parser and produce the prediction result for test data
+def bestmodel(**kwargs):
+    estimator = [('pca', PCA(**kwargs['meta']['reduce'])), ('classifier', kwargs['classifier'].set_params(**kwargs['meta']['classifier']))]
+    clf = Pipeline(estimator)
+    clf.fit(kwargs['X_train'], kwargs['y_train'])
+    return clf.predict(kwargs['X_test'])
+
+
+# generate the dictionary for tracing the best classifier for each case
+def bestinfo(path_model, methods):
+    result = defaultdict()
+    with open(value, 'r') as f:
+        for key, line in enumerate(f):
+            if key < 1:
+                line = line.strip()
+                model, d_individual, _ = parse(line)
+                classifier = methods[model]
+                result['classifier'] = classifier
+                result['meta'] = d_individual
+            else:
+                return result
+
+
+
+
+
 
 
 

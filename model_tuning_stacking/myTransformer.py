@@ -35,7 +35,7 @@ class MyTransformer(BaseEstimator, TransformerMixin):
         try:
             prediciton = self.model.predict_proba(X)[:, 1]
         except:
-            prediction = self.model.predict(X)[:, 1]
+            prediction = self.model.predict(X)
         return pd.DataFrame(prediction)
 
 
