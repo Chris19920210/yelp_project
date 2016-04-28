@@ -97,10 +97,10 @@ def bestmodel(**kwargs):
     return clf.predict(kwargs['X_test'])
 
 
-# generate the dictionary for tracing the best classifier for each case
-def bestinfo(path_model, methods):
+# generate the dictionary for tracing the best classifier for each case(the first line of the result)
+def bestinfo(path_to_model, methods):
     result = defaultdict()
-    with open(value, 'r') as f:
+    with open(path_to_model, 'r') as f:
         for key, line in enumerate(f):
             if key < 1:
                 line = line.strip()
@@ -108,7 +108,6 @@ def bestinfo(path_model, methods):
                 classifier = methods[model]
                 result['classifier'] = classifier
                 result['meta'] = d_individual
-            else:
                 return result
 
 
