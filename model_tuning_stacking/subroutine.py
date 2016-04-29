@@ -21,7 +21,7 @@ import collections
 import ast
 from collections import defaultdict
 import itertools
-
+import pickle
 
 def translate(methods, k, tmp):
     params = {}
@@ -90,11 +90,11 @@ def pipeline_generator(dicts):
 
 
 # best model parser and produce the prediction result for test data
-def bestmodel(**kwargs):
+def bestmodel(path,name,**kwargs):
     estimator = [('pca', PCA(**kwargs['meta']['reduce'])), ('classifier', kwargs['classifier'].set_params(**kwargs['meta']['classifier']))]
     clf = Pipeline(estimator)
     clf.fit(kwargs['X_train'], kwargs['y_train'])
-    return clf.predict(kwargs['X_test'])
+    return (clf, clf.predict(kwargs['X_test']))
 
 
 # generate the dictionary for tracing the best classifier for each case(the first line of the result)

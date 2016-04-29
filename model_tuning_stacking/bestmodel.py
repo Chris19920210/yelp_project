@@ -22,7 +22,7 @@ import ast
 from collections import defaultdict
 import itertools
 from subroutine import bestmodel, parse, bestinfo
-
+import pickle
 # choose the model that give us the highest f1 score
 # predict for the X_test
 # read the labels from local
@@ -68,13 +68,14 @@ def main():
         X_test = pd.read_csv(value[2])
         X_test.drop('business_id', axis=1, inplace=True)
         dicts['X_test'] = X_test
-        result['class'+key] = bestmodel(**dicts)
+        clf, result['class'+key] = bestmodel(**dicts)
+        pickle.dump(clf, open(os.path.join(args.save_dir, 'class_'+key+'.p'), "wb"))
     return result
 
 if __name__ == '__main__':
     result = main()
     result = pd.DataFrame(result)
-    result.to_csv('./best_result.csv', index=False)
+    result.to_csv(os.path.join(args.save_dir,'best_result.csv'), index=False)
 
 
 
