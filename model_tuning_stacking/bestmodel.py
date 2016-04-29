@@ -74,7 +74,7 @@ def main():
 if __name__ == '__main__':
     result = main()
     result = pd.DataFrame(result)
-    result.to_csv('./', index=False)
+    result.to_csv('./best_result.csv', index=False)
 
 
 
