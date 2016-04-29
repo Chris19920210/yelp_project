@@ -107,14 +107,14 @@ for value in dict_list:
     for k, v in value.items():
         agg_dicts[k] = v
 
+
 # general pipeline
 def main():
-    clf = Pipeline([
-            ('separator', DataFrameSeparator()),
-            ('union', FeatureUnion(
-                transformer_list=pipeline_generator(agg_dicts)
-            )),
-            ('xgboost', XGBClassifier())])
+    estimator = [('separator', DataFrameSeparator()),
+                ('union', FeatureUnion(
+                transformer_list=pipeline_generator(agg_dicts)),
+                ('xgboost', XGBClassifier())]
+    clf = Pipeline(estimator)
     params['xgboost__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
     params['xgboost__max_depth'] = list(np.arange(args.depths[0], args.depths[1], args.depths[2]))
     params['xgboost__learning_rate'] = list(np.arange(args.lr[0], args.lr[1], args.lr[2]))
@@ -128,6 +128,8 @@ def main():
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)
+
+
 
 if __name__ == '__main__':
     result = main()

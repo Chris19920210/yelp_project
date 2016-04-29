@@ -43,7 +43,6 @@ class MyTransformer(BaseEstimator, TransformerMixin):
 class DataFrameSeparator(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
-
     def transform(self, X, **transform_params):
         pooling = ['max', 'mean']
         feature = ['Inception', 'Inception-7', 'Inception_BN']
