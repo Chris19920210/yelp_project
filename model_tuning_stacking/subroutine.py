@@ -90,7 +90,7 @@ def pipeline_generator(dicts):
 
 
 # best model parser and produce the prediction result for test data
-def bestmodel(path,name,**kwargs):
+def bestmodel(**kwargs):
     estimator = [('pca', PCA(**kwargs['meta']['reduce'])), ('classifier', kwargs['classifier'].set_params(**kwargs['meta']['classifier']))]
     clf = Pipeline(estimator)
     clf.fit(kwargs['X_train'], kwargs['y_train'])

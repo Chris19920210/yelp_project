@@ -26,8 +26,13 @@ import pickle
 # choose the model that give us the highest f1 score
 # predict for the X_test
 # read the labels from local
-y = pd.read_csv('./business_id_labels.csv')
+parser = argparse.ArgumentParser(description='best model predict various models')
+parser.add_argument('--save-dir', type=str, default='.',
+                    help='the input data directory')
+args = parser.parse_args()
 
+y = pd.read_csv('./business_id_labels.csv')
+ID= pd.read_csv('./ID.csv')
 # potential methods
 methods = {
     'svm': SGDClassifier(loss='hinge'),
@@ -51,8 +56,8 @@ path_dicts={
     '5':('mean_pooling_result2/Result_for_Class_5_Inception_train224.txt', 'pooling_data2/Inception_train224.csv', 'pooling_data2/Inception_test224.csv' ),
     '6':('mean_pooling_result2/Result_for_Class_6_Inception_train224.txt','pooling_data2/Inception_train224.csv', 'pooling_data2/Inception_test224.csv' ),
     '7':('mean_pooling_result2/Result_for_Class_7_Inception_train224.txt', 'pooling_data2/Inception_train224.csv', 'pooling_data2/Inception_test224.csv' ),
-    '8':('max_pooling_result2/Result_for_Class_8_Inception_train224.txt', 'pooling_data/Inception_train224.csv', 'pooling_data/Inception_test224.csv' ),
-    '9':('max_pooling_result2/Result_for_Class_9_Inception_train224.txt', 'pooling_data2/Inception_train224.csv', 'pooling_data2/Inception_test224.csv' )
+    '8':('median_pooling_result2/Result_for_Class_8_Inception_train224.txt', 'pooling_data3/Inception_train224.csv', 'pooling_data3/Inception_test224.csv' ),
+    '9':('mean_pooling_result2/Result_for_Class_9_Inception_train224.txt', 'pooling_data2/Inception_train224.csv', 'pooling_data2/Inception_test224.csv' )
 }
 
 
@@ -69,12 +74,13 @@ def main():
         X_test.drop('business_id', axis=1, inplace=True)
         dicts['X_test'] = X_test
         clf, result['class'+key] = bestmodel(**dicts)
-        pickle.dump(clf, open(os.path.join(args.save_dir, 'class_'+key+'.p'), "wb"))
+        pickle.dump(clf, open(os.path.join(args.save_dir, 'class_'+ key +'.p'), "wb"))
     return result
 
 if __name__ == '__main__':
     result = main()
     result = pd.DataFrame(result)
+    result = pd.concat([Id, result], axis=1)
     result.to_csv(os.path.join(args.save_dir,'best_result.csv'), index=False)
 
 
