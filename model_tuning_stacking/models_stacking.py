@@ -77,9 +77,9 @@ methods = {'svm': SGDClassifier(loss='hinge'),
 #  generate metadata list
 dict_list = []
 # path to mean_pooling_result
-path1 = 'mean_pooling_result'
+path1 = 'mean_pooling_result2'
 # path to mean_pooling_result
-path2 = 'max_pooling_result'
+path2 = 'max_pooling_result2'
 
 # files that with specific labels
 files = [f for f in os.listdir(path1) if re.match(r'Result_for_Class_' + re.escape(args.nclass) + r'.*', f)]
@@ -102,11 +102,10 @@ for value in args.mean_pooling + args.max_pooling:
     dict_list.append(d)
 
 # transform to dictionary
-agg_dicts = defaultdict(d)
+agg_dicts = defaultdict()
 for value in dict_list:
-    k, v = value.items()
-    agg_dicts[k] = v
-
+    for k, v in value.items():
+        agg_dicts[k] = v
 
 # general pipeline
 def main():

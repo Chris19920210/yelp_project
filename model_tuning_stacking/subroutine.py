@@ -80,7 +80,7 @@ def pipeline_generator(dicts):
     for key, value in dicts.items():
         for k, v in value.items():
             d_individual, classifier = v
-            chunk = (str(key)+str(k), Pipeline([
+            chunk = (str(key)+ '_'+ str(k), Pipeline([
                     ('selector', DataFrameSelector(key=key)),
                     ('reduce_dim', PCA(**d_individual['reduce'])),
                     ('classifier', MyTransformer(classifier.set_params(**d_individual['classifier'])))
