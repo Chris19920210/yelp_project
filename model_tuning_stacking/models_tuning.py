@@ -18,6 +18,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 import argparse
 import re
 import collections
+from subroutine import translate
 
 parser = argparse.ArgumentParser(description='tuning various models')
 parser.add_argument('--labels-file', type=str, required=True,
@@ -56,15 +57,6 @@ methods = {'pca': (PCA(), 'reduce_dim__n_components'),
 
 # Handle random forest and pca differently
 tmp = list(map(lambda x: int(x) if args.dimension_reduction == 'pca' else x, args.num))
-
-
-# construct identifier
-def translate(methods, k, tmp):
-    params = {}
-    key = methods[k][1]
-    params[key] = tmp
-    return params
-
 
 # Dimension reduction and classifier pipline
 # For classifier with too many parameters, we use randomizedsearchcv otherwise grid_search_cv
