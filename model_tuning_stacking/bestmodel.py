@@ -32,7 +32,7 @@ parser.add_argument('--save-dir', type=str, default='.',
 args = parser.parse_args()
 
 y = pd.read_csv('./business_id_labels.csv')
-ID= pd.read_csv('./ID.csv')
+Id= pd.read_csv('./ID.csv')
 # potential methods
 methods = {
     'svm': SGDClassifier(loss='hinge'),
