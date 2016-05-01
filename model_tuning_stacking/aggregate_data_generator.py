@@ -10,7 +10,7 @@ import itertools
 from subroutine import path_generator
 parser = argparse.ArgumentParser(description='aggregate_data for ')
 parser.add_argument('--data-dir', nargs='+', type=str,
-                    default=['pooling_data', 'pooling_data2'],
+                    default=['pooling_data', 'pooling_data2','pooling_data3'],
                     help='the input data directory')
 parser.add_argument('--dataset', nargs='+', type=str,
                     default=['Inception-7_train384.csv', 'Inception_BN_train224.csv', 'Inception_train224.csv'],
@@ -27,18 +27,22 @@ def main():
         paths = path_generator(path_tuple)
         data_list = []
         for key, value in enumerate(paths):
-            data_list[k] = pd.read_csv(value)
+            data_list[key] = pd.read_csv(value)
         current = data_list[0]
         for i, frame in enumerate(data_list[1:]):
             current = current.merge(frame, on='business_id')
         names = current.columns[1:]
         if value == 'pooling_data2':
             names = ['mean'+'_' + k for k in names]
-        else:
+        elif value == 'pooling_data':
             names = ['max'+'_' + k for k in names]
+        else:
+            names = ['median' + '_' + k for k in names]
         current.columns = ['business_id'] + names
         meta_data.append(current)
-    X = meta_data[0].merge(meta_data[1], on='business_id')
+    X = meta_data[0]
+    for value in meta_data:
+        X = X.merge(value, on='business_id')
     return X
 
 

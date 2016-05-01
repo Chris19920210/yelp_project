@@ -37,10 +37,13 @@ parser.add_argument('--top', type=int, required=1,
                     help='top k model for combination')
 parser.add_argument('--mean-pooling', nargs='+', type=str, required=True,
                     choices=['mean_Inception-7', 'mean_Inception_BN', 'mean_Inception'],
-                    help='mean pooling data set, put cv result in mean_pooling_result')
+                    help='mean pooling data set, put cv result in mean_pooling_result2')
 parser.add_argument('--max-pooling', nargs='+', type=str, required=True,
                     choices=['max_Inception-7', 'max_Inception_BN', 'max_Inception'],
-                    help='max pooling data set, put cv result in max_pooling_result')
+                    help='max pooling data set, put cv result in max_pooling_result2')
+parser.add_argument('--median-pooling', nargs='+',type=str, required=True,
+                    choices=['median_Inception-7','median_Inception_BN','median_Inception'],
+                    help='median pooling data set, put cv result in median_pooling_result2')
 parser.add_argument('--num-tree', nargs='+', type=int, default=[100, 101, 1],
                     help='# of trees for tree based methods')
 parser.add_argument('--depths', nargs='+', type=int, default=[3, 4, 1],
@@ -78,9 +81,10 @@ methods = {'svm': SGDClassifier(loss='hinge'),
 dict_list = []
 # path to mean_pooling_result
 path1 = 'mean_pooling_result2'
-# path to mean_pooling_result
+# path to max_pooling_result
 path2 = 'max_pooling_result2'
-
+# path to median_pooling_result
+path3 = 'median_pooling_result2'
 # files that with specific labels
 files = [f for f in os.listdir(path1) if re.match(r'Result_for_Class_' + re.escape(args.nclass) + r'.*', f)]
 
