@@ -1,5 +1,3 @@
-from collections import OrderedDict
-import pandas as pd
 import numpy as np
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.base import TransformerMixin, BaseEstimator, clone
