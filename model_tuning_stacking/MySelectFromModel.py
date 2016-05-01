@@ -9,7 +9,12 @@ from sklearn.utils.validation import check_is_fitted
 from numpy import median
 
 """
-The MySelectFromModel is based on Sklearn's SelectFormModel, the modification is trying to provide the data scientist a more convenient way to tune the hyperparamaters. Namely, instead of setting the threshold for 'importance', here we can directly tune the dimension of reduction by using methods such as random forest. the default is to shrink the data set to half of its original dimension based on variable importance
+The MySelectFromModel is based on Sklearn's SelectFormModel, the modification
+is trying to provide the data scientist a more convenient way to tune the
+hyperparamaters. Namely, instead of setting the threshold for 'importance',
+here we can directly tune the dimension of reduction by using methods such as
+random forest. the default is to shrink the data set to half of its original
+dimension based on variable importance.
 """
 
 def _calculate_threshold(estimator, scores, n_components):
