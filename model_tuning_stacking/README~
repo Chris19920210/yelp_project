@@ -1,0 +1,19 @@
+All of the models are based on dimension reduction + classifier pipeline
+
+Dimension Reduction:
+PCA
+Random Forest (importances based on OOB)
+
+Classifier:
+Forest model: Random Forest, Extreme Random Forest
+Boosting: Xgboost(gradient boost), Adaboost
+SGDclassifier(loss + penalty): modified huber, hinge, squared hinge, logistic
+Discriminant models: LDA, QDA
+
+Hyperparameters:
+PCA/Random Forest(importance) : Dimension  
+Tree based: number of trees(rounds), depths, number of features for node splits, etc
+SGD: penalty multiplier 
+Boosting: learning rate
+
+Firstly, best model for each classifier is set up as the benchmark. In general, the models based on Inception-21k features and mean pooling give us the best performance among all. 

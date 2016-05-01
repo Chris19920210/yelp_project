@@ -17,3 +17,10 @@ SGD: penalty multiplier
 Boosting: learning rate
 
 Firstly, best model for each classifier is set up as the benchmark. In general, the models based on Inception-21k features and mean pooling give us the best performance among all. 
+
+
+Notice that mytransformer and MySelectFromModel are reproduciable codes.
+Basically, mytransformer can be used to deal with training multiple classifiers from heterogeneous dataset (X is different for each classifier but they share same labels). It provides a way to seperate the dataset. It's the frist stage to implement FeatureUnion based on different dataset. Especially, it is very helpful to construct pipelines to do gridsearch cv for stacking various classifier based on different data set separately.
+MySelectFromModel is a modification of sklearn's SelectFromModel, which allows the user to tune the degree of dimension reduction directly. Namely, the users can tune the dimension after implementing some model-based dimension reduction methods such as Random Forest.
+
+
