@@ -22,6 +22,8 @@ import ast
 from collections import defaultdict
 import itertools
 import pickle
+from myTransformer import *
+
 
 def path_generator(path_tuple):
     result = []
@@ -66,20 +68,6 @@ def RetrievalDict(key, path, threshold, dicts):
     return d
 
 
-# generate a list for FeatureUnion
-# nested dictionary
-def pipeline_generator(dicts):
-    result = []
-    for key, value in dicts.items():
-        for k, v in value.items():
-            d_individual, classifier = v
-            chunk = (str(key)+ '_'+ str(k), Pipeline([
-                    ('selector', DataFrameSelector(key=key)),
-                    ('reduce_dim', PCA(**d_individual['reduce'])),
-                    ('classifier', MyTransformer(classifier.set_params(**d_individual['classifier'])))
-                ]))
-            result.append(chunk)
-    return result
 
 
 # best model parser and produce the prediction result for test data
@@ -102,10 +90,6 @@ def bestinfo(path_to_model, methods):
                 result['classifier'] = classifier
                 result['meta'] = d_individual
                 return result
-
-
-
-
 
 
 

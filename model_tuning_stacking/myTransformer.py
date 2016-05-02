@@ -33,7 +33,7 @@ class MyTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X, **transform_params):
         try:
-            prediciton = self.model.predict_proba(X)[:, 1]
+            prediction = self.model.predict_proba(X)[:, 1]
         except:
             prediction = self.model.predict(X)
         return pd.DataFrame(prediction)
@@ -44,11 +44,11 @@ class DataFrameSeparator(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
     def transform(self, X, **transform_params):
-        pooling = ['max', 'mean']
-        feature = ['Inception', 'Inception-7', 'Inception_BN']
-        d = PartialStringColumns(pooling, feature)
+        tmp = X.columns
+        pattern = r'(.*)_\d+_\d+$'
+        d = set(map(lambda x: re.search(pattern, x).group(1), tmp))
         feature = {}
-        for k in d.keys():
+        for k in d:
             part = re.escape(k) + r'_\d+.*'
             feature[k] = X.filter(regex=part)
         return feature
@@ -63,3 +63,16 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
 
     def transform(self, data_dict):
         return data_dict[self.key]
+
+def pipeline_generator(dicts):
+    result = []
+    for key, value in dicts.items():
+        for k, v in value.items():
+            d_individual, classifier = v
+            chunk = (str(key)+ '_'+ str(k), Pipeline([
+                    ('selector', DataFrameSelector(key=key)),
+                    ('reduce_dim', PCA(**d_individual['reduce'])),
+                    ('classifier', MyTransformer(classifier.set_params(**d_individual['classifier'])))
+                ]))
+            result.append(chunk)
+    return result

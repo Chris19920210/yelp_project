@@ -18,9 +18,9 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 import argparse
 import re
 import collections
-from myTransformer import MyTransformer, DataFrameSeparator, DataFrameSelector
+from myTransformer import *
 from collections import defaultdict
-from subroutine import parse,  RetrievalDict, pipeline_generator
+from subroutine import parse,  RetrievalDict
 from subroutine import PartialStringColumns
 
 # parser for model stacking
@@ -92,16 +92,20 @@ files = [f for f in os.listdir(path1) if re.match(r'Result_for_Class_' + re.esca
 pattern = r"^(Result_for_Class_)\d+_(\w+.*)_\w+\d+\.txt$"
 
 
-for value in args.mean_pooling + args.max_pooling:
+for value in args.mean_pooling + args.max_pooling + args.median_pooling:
     if re.match(r'mean.*', value):
         # retrieve wanted file
         tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
         # path to wanted file
         path = os.path.join(path1, tmp_list[0])
         d = RetrievalDict(value, path, args.top, methods)
-    else:
+    elif re.match(r'max.*',value):
         tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
         path = os.path.join(path2, tmp_list[0])
+        d = RetrievalDict(value, path, args.top, methods)
+    else:
+        tmp_list = [f for f in files if re.search(pattern, f).group(2) == value[value.find('_'):][1:]]
+        path = os.path.join(path3, tmp_list[0])
         d = RetrievalDict(value, path, args.top, methods)
     dict_list.append(d)
 
@@ -116,9 +120,10 @@ for value in dict_list:
 def main():
     estimator = [('separator', DataFrameSeparator()),
                 ('union', FeatureUnion(
-                transformer_list=pipeline_generator(agg_dicts)),
+                transformer_list=pipeline_generator(agg_dicts))),
                 ('xgboost', XGBClassifier())]
     clf = Pipeline(estimator)
+    params={}
     params['xgboost__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
     params['xgboost__max_depth'] = list(np.arange(args.depths[0], args.depths[1], args.depths[2]))
     params['xgboost__learning_rate'] = list(np.arange(args.lr[0], args.lr[1], args.lr[2]))
@@ -131,14 +136,15 @@ def main():
         grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
-    return (best_parameters, score)
+    return (grid_search, best_parameters, score)
 
 
 
 if __name__ == '__main__':
     result = main()
-    print result
-
-
+    pickle.dump(result[0], open(args.nclass + '_' + 'grid_search_predictor.p', 'wb'))
+    print result[1:]
+    with open(args.nclass + '_' + 'result' + '.txt', 'w+') as f:
+        f.write(str(result[1:]))
 
 
