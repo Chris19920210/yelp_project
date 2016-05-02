@@ -18,7 +18,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 import argparse
 import re
 import collections
-from subroutine import translate
+from MySelectFromModel import *
 
 parser = argparse.ArgumentParser(description='tuning various models')
 parser.add_argument('--labels-file', type=str, required=True,
@@ -32,7 +32,7 @@ parser.add_argument('--dataset', type=str, required=True,
 parser.add_argument('--dimension-reduction', type=str, default='pca',
                     choices=['pca', 'randomforest'],
                     help='dimension reduction methods')
-parser.add_argument('--num', nargs='+', type=str, required=True,
+parser.add_argument('--num', nargs='+', type=int, default=[100, 101, 1],
                     help='dimension after reduction')
 parser.add_argument('--num-tree', nargs='+', type=int, default=[100, 101, 1],
                     help='# of trees for tree based methods')
@@ -52,27 +52,24 @@ X = pd.read_csv(data_path)
 X.drop('business_id', axis=1, inplace=True)
 y = pd.read_csv(args.labels_file)[args.nclass]
 # potential methods
-methods = {'pca': (PCA(), 'reduce_dim__n_components'),
-            'randomforest': (SelectFromModel(RandomForestClassifier(n_estimators=200)), 'reduce_dim__threshold')}
-
-# Handle random forest and pca differently
-tmp = list(map(lambda x: int(x) if args.dimension_reduction == 'pca' else x, args.num))
+methods = {'pca': PCA(), 'randomforest': MySelectFromModel(RandomForestClassifier(n_estimators=200))}
 
 # Dimension reduction and classifier pipline
 # For classifier with too many parameters, we use randomizedsearchcv otherwise grid_search_cv
 # forest pca/randomforest pipeline (random forest and extra tree)
 def forest_method(X, y, est):
-    estimators = [('reduce_dim', methods[args.dimension_reduction][0]), ('classifier', est)]
+    estimators = [('reduce_dim', methods[args.dimension_reduction]), ('classifier', est)]
     clf = Pipeline(estimators)
-    params = translate(methods, args.dimension_reduction, tmp)
+    params = {}
+    params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
     params['classifier__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
     params['classifier__max_depth'] = list(np.arange(args.depths[0], args.depths[1], args.depths[2]))
     params['classifier__max_features'] = ['auto', 'sqrt', 'log2']
     try:
-        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1)
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1,scoring='f1')
         grid_search.fit(X, y)
     except:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1)
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1,scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)
@@ -80,20 +77,21 @@ def forest_method(X, y, est):
 
 # xgboost pca/randomforest pipline
 def xg_boost(X, y):
-    estimators = [('reduce_dim', methods[args.dimension_reduction][0]), ('classifier', XGBClassifier())]
+    estimators = [('reduce_dim', methods[args.dimension_reduction]), ('classifier', XGBClassifier())]
     clf = Pipeline(estimators)
     clf.set_params(classifier__objective="binary:logistic")
-    params = translate(methods, args.dimension_reduction, tmp)
+    params = {}
+    params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
     params['classifier__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
     params['classifier__max_depth'] = list(np.arange(args.depths[0], args.depths[1], args.depths[2]))
     params['classifier__learning_rate'] = list(np.arange(args.lr[0], args.lr[1], args.lr[2]))
     params['classifier__subsample'] = [0.5, 0.8, 1]
     params['classifier__colsample_bytree'] = [0.5, 0.8, 1]
     try:
-        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1)
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     except:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1)
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1,scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)
@@ -101,17 +99,18 @@ def xg_boost(X, y):
 
 # Adaboost pca/randomforest piplline
 def adaboost(X, y):
-    estimators = [('reduce_dim', methods[args.dimension_reduction][0]),
+    estimators = [('reduce_dim', methods[args.dimension_reduction]),
     ('classifier', AdaBoostClassifier())]
     clf = Pipeline(estimators)
-    params = translate(methods, args.dimension_reduction, tmp)
+    params = {}
+    params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
     params['classifier__n_estimators'] = list(np.arange(args.num_tree[0], args.num_tree[1], args.num_tree[2]))
     params['classifier__learning_rate'] = list(np.arange(args.lr[0], args.lr[1], args.lr[2]))
     try:
-        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1)
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     except:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1)
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)
@@ -120,16 +119,17 @@ def adaboost(X, y):
 # SGD classifier
 # SGD classifier pca/randomforest pipline(huber, logistic,svm,modified svm, etc)
 def SGDclass(X, y, loss):
-    estimators = [('reduce_dim', methods[args.dimension_reduction][0]), ('classifier', SGDClassifier())]
+    estimators = [('reduce_dim', methods[args.dimension_reduction]), ('classifier', SGDClassifier())]
     clf = Pipeline(estimators)
     clf.set_params(classifier__loss=loss)
-    params = translate(methods, args.dimension_reduction, tmp)
+    params = {}
+    params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
     params['classifier__alpha'] = list(np.arange(args.alpha[0], args.alpha[1], args.alpha[2]))
     try:
-        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1)
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     except:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1)
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)
@@ -138,9 +138,10 @@ def SGDclass(X, y, loss):
 # Discriminant analysis
 # Discriminant analysis pca/randomforest pipeline (linear, quadratic)
 def DiscAna(X, y, est):
-    estimators = [('reduce_dim', methods[args.dimension_reduction][0]), ('classifier', est)]
+    estimators = [('reduce_dim', methods[args.dimension_reduction]), ('classifier', est)]
     clf = Pipeline(estimators)
-    params = translate(methods, args.dimension_reduction, tmp)
+    params={}
+    params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
     if re.match(r'Linear*', str(est)) and args.dimension_reduction == 'pca':
         prop = np.append(np.arange(0.5, 1, 0.2), 1)
         outer = np.outer(prop, np.array(tmp))
@@ -148,10 +149,10 @@ def DiscAna(X, y, est):
         params['classifier__n_components'] = list(comp)
 
     try:
-        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1)
+        grid_search = RandomizedSearchCV(clf, param_distributions=params, n_iter=args.iter, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     except:
-        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1)
+        grid_search = GridSearchCV(clf, param_grid=params, cv=5, n_jobs=-1, scoring='f1')
         grid_search.fit(X, y)
     best_parameters, score, _ = max(grid_search.grid_scores_, key=lambda x: x[1])
     return (best_parameters, score)

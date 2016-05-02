@@ -23,13 +23,6 @@ from collections import defaultdict
 import itertools
 import pickle
 
-def translate(methods, k, tmp):
-    params = {}
-    key = methods[k][1]
-    params[key] = tmp
-    return params
-
-
 def path_generator(path_tuple):
     result = []
     for value in path_tuple:
