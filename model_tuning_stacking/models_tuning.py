@@ -142,9 +142,9 @@ def DiscAna(X, y, est):
     clf = Pipeline(estimators)
     params={}
     params['reduce_dim__n_components'] = list(np.arange(args.num[0], args.num[1], args.num[2]))
-    if re.match(r'Linear*', str(est)) and args.dimension_reduction == 'pca':
+    if re.match(r'Linear*', str(est)):
         prop = np.append(np.arange(0.5, 1, 0.2), 1)
-        outer = np.outer(prop, np.array(tmp))
+        outer = np.outer(prop, np.array(list(np.arange(args.num[0], args.num[1], args.num[2]))))
         comp = outer.flatten().astype(int)
         params['classifier__n_components'] = list(comp)
 
