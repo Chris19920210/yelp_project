@@ -14,39 +14,6 @@ here we can directly tune the dimension of reduction by using methods such as
 random forest. the default is to shrink the data set to half of its original
 dimension based on variable importance.
 """
-
-def _calculate_threshold(estimator, scores, n_components):
-    lists = sorted(scores, reverse = True)
-    if n_components == None:
-        threshold = median(lists)
-    else:
-        threshold = lists[n_components-1]
-    return threshold
-
-
-def _get_feature_importances(estimator):
-    """Retrieve or aggregate feature importances from estimator"""
-    if hasattr(estimator, "feature_importances_"):
-        importances = estimator.feature_importances_
-
-    elif hasattr(estimator, "coef_"):
-        if estimator.coef_.ndim == 1:
-            importances = np.abs(estimator.coef_)
-
-        else:
-            importances = np.sum(np.abs(estimator.coef_), axis=0)
-
-    else:
-        raise ValueError(
-            "The underlying estimator %s has no `coef_` or "
-            "`feature_importances_` attribute. Either pass a fitted estimator"
-            " to SelectFromModel or call fit before calling transform."
-            % estimator.__class__.__name__)
-
-    return importances
-
-
-
 class MySelectFromModel(SelectorMixin, BaseEstimator):
     def __init__(self, estimator, prefit=False, n_components = None):
         self.estimator = estimator
@@ -62,9 +29,9 @@ class MySelectFromModel(SelectorMixin, BaseEstimator):
             estimator = self.estimator_
         else:
             raise ValueError('Either fit the model before transform or set "prefit=True"'' while passing the fitted estimator to the constructor.')
-        scores = _get_feature_importances(estimator)
+        scores = self._get_feature_importances(estimator)
         self.feature_importance = scores
-        self.threshold_ = _calculate_threshold(estimator, scores, self.n_components)
+        self.threshold_ = self._calculate_threshold(estimator, scores, self.n_components)
 
         return scores >= self.threshold_
 
@@ -93,4 +60,34 @@ class MySelectFromModel(SelectorMixin, BaseEstimator):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
+
+    def _calculate_threshold(estimator, scores, n_components):
+        lists = sorted(scores, reverse = True)
+        if n_components == None:
+            threshold = median(lists)
+        else:
+            threshold = lists[n_components-1]
+        return threshold
+
+
+    def _get_feature_importances(estimator):
+        """Retrieve or aggregate feature importances from estimator"""
+        if hasattr(estimator, "feature_importances_"):
+            importances = estimator.feature_importances_
+
+        elif hasattr(estimator, "coef_"):
+            if estimator.coef_.ndim == 1:
+                importances = np.abs(estimator.coef_)
+
+            else:
+                importances = np.sum(np.abs(estimator.coef_), axis=0)
+
+        else:
+            raise ValueError(
+                "The underlying estimator %s has no `coef_` or "
+                "`feature_importances_` attribute. Either pass a fitted estimator"
+                " to SelectFromModel or call fit before calling transform."
+                % estimator.__class__.__name__)
+
+        return importances
 
