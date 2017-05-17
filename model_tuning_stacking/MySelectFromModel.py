@@ -61,7 +61,7 @@ class MySelectFromModel(SelectorMixin, BaseEstimator):
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
 
-    def _calculate_threshold(estimator, scores, n_components):
+    def _calculate_threshold(self, estimator, scores, n_components):
         lists = sorted(scores, reverse = True)
         if n_components == None:
             threshold = median(lists)
@@ -70,7 +70,7 @@ class MySelectFromModel(SelectorMixin, BaseEstimator):
         return threshold
 
 
-    def _get_feature_importances(estimator):
+    def _get_feature_importances(self, estimator):
         """Retrieve or aggregate feature importances from estimator"""
         if hasattr(estimator, "feature_importances_"):
             importances = estimator.feature_importances_
